@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>策略警示主頁</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root{
+  --ink:#e9e4d8;
+  --ink-dim:#a9a190;
+  --ink-faint:#736c60;
+  --paper-deep:#14181f;
+  --paper-panel:#1b202a;
+  --paper-panel-2:#20262f;
+  --paper-line:#2c3340;
+  --seal-red:#c8433d;
+  --seal-red-dim:#c8433d33;
+  --jade:#2f9e7d;
+  --jade-dim:#2f9e7d2e;
+  --brass:#c9a24a;
+  --brass-dim:#c9a24a26;
+  --font-display:'Noto Serif TC',serif;
+  --font-body:'Noto Sans TC',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+
+body{
+  background:
+    radial-gradient(circle at 15% 0%, #1d2432 0%, transparent 55%),
+    var(--paper-deep);
+  color:var(--ink);
+  font-family:var(--font-body);
+  padding:48px 24px 96px;
+  min-height:100vh;
+}
+
+.wrap{max-width:1040px; margin:0 auto;}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative;
+  padding:40px 40px 32px;
+  border:1px solid var(--paper-line);
+  border-radius:4px;
+  background:linear-gradient(180deg,#1c222d 0%, #171c25 100%);
+  overflow:hidden;
+  margin-bottom:28px;
+}
+.hero::before{
+  content:"";
+  position:absolute; top:0; right:0; bottom:0; width:180px;
+  background:repeating-linear-gradient(90deg, transparent 0 22px, var(--paper-line) 22px 23px);
+  opacity:.35;
+  pointer-events:none;
+}
+.eyebrow{
+  font-family:var(--font-mono); font-size:12px; letter-spacing:.18em;
+  color:var(--brass); text-transform:uppercase; display:flex; align-items:center; gap:10px;
+}
+.eyebrow::before{content:"卷"; font-family:var(--font-display); font-size:14px;}
+h1{font-family:var(--font-display); font-weight:900; font-size:42px; margin:14px 0 8px; letter-spacing:.02em;}
+.hero p{color:var(--ink-dim); font-size:14.5px; max-width:60ch; line-height:1.7;}
+
+.stat-row{display:flex; gap:14px; margin-top:26px; flex-wrap:wrap;}
+.stat{border:1px solid var(--paper-line); border-radius:3px; padding:12px 18px; min-width:110px; background:#00000022;}
+.stat .num{font-family:var(--font-mono); font-size:24px; font-weight:700;}
+.stat .lbl{font-size:11.5px; color:var(--ink-dim); margin-top:2px;}
+.stat.buy .num{color:var(--seal-red);}
+
+/* ---------- SECTION LABEL ---------- */
+.section-head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  margin:36px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--paper-line);
+}
+.section-head h2{font-family:var(--font-display); font-size:18px; font-weight:700; letter-spacing:.04em;}
+.section-head .count{font-family:var(--font-mono); font-size:12px; color:var(--ink-dim);}
+
+/* ---------- STRATEGY CARD (top level) ---------- */
+.strategy{
+  border:1px solid var(--paper-line); border-radius:4px;
+  background:var(--paper-panel); margin-bottom:18px; overflow:hidden;
+}
+.strategy-head{
+  display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+  padding:20px 22px; cursor:pointer;
+}
+.strategy-title-block{display:flex; gap:14px; align-items:flex-start;}
+.seal{
+  flex:none; width:46px; height:46px; border:2px solid currentColor; border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:900; font-size:14px; transform:rotate(-4deg);
+}
+.seal.active{color:var(--seal-red);}
+.seal.draft{color:var(--ink-dim); border-style:dashed;}
+
+.strategy-title h3{font-family:var(--font-display); font-size:20px; font-weight:700;}
+.strategy-title .type-lbl{font-family:var(--font-mono); font-size:11px; color:var(--brass); letter-spacing:.06em; margin-top:3px;}
+.strategy-title .desc{font-size:13px; color:var(--ink-dim); margin-top:8px; max-width:62ch; line-height:1.6;}
+
+.head-right{display:flex; align-items:center; gap:10px;}
+.status-chip{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; padding:4px 10px;
+  border-radius:20px; white-space:nowrap; border:1px solid currentColor;
+}
+.status-chip.active{color:var(--seal-red); background:var(--seal-red-dim);}
+.status-chip.draft{color:var(--ink-dim); background:#ffffff08;}
+.chevron{font-family:var(--font-mono); color:var(--ink-dim); font-size:14px; transition:transform .15s;}
+.strategy.collapsed .chevron{transform:rotate(-90deg);}
+.strategy.collapsed .strategy-body{display:none;}
+
+.strategy-body{border-top:1px solid var(--paper-line); padding:18px 22px 22px; background:var(--paper-panel-2);}
+
+.del-x{font-family:var(--font-mono); font-size:12px; color:var(--ink-dim); background:none; border:none; cursor:pointer; padding:2px 4px;}
+.del-x:hover{color:var(--seal-red);}
+
+/* ---------- BRANCH LIST (inside 分點追蹤) ---------- */
+.branch-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+.branch-toolbar .lbl{font-family:var(--font-mono); font-size:11px; color:var(--ink-dim); letter-spacing:.08em; text-transform:uppercase;}
+.add-branch-btn{
+  font-family:var(--font-mono); font-size:11px; color:var(--brass); background:none;
+  border:1px solid var(--brass-dim); border-radius:3px; padding:5px 11px; cursor:pointer;
+}
+.add-branch-btn:hover{background:var(--brass-dim);}
+
+.branch{border:1px solid var(--paper-line); border-radius:4px; margin-bottom:10px; background:var(--paper-panel);}
+.branch-row{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:12px 16px; cursor:pointer;
+}
+.branch-row .name-block{display:flex; align-items:center; gap:10px; min-width:0;}
+.branch-row .dot{width:7px; height:7px; border-radius:50%; flex:none;}
+.branch-row .dot.has-data{background:var(--seal-red);}
+.branch-row .dot.no-data{background:var(--ink-faint);}
+.branch-row .bname{font-weight:500; font-size:14px;}
+.branch-row .burl{font-family:var(--font-mono); font-size:11px; color:var(--ink-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:280px;}
+.branch-row .bmeta{display:flex; align-items:center; gap:14px; flex:none;}
+.branch-row .top-preview{font-family:var(--font-mono); font-size:11.5px; color:var(--ink-dim);}
+.branch-row .top-preview b{color:var(--seal-red); font-weight:700;}
+.branch-row .updated{font-family:var(--font-mono); font-size:10.5px; color:var(--ink-faint); white-space:nowrap;}
+.branch-chevron{font-family:var(--font-mono); color:var(--ink-dim); font-size:12px; transition:transform .15s;}
+.branch.collapsed .branch-chevron{transform:rotate(-90deg);}
+.branch.collapsed .branch-detail{display:none;}
+.branch-detail{border-top:1px solid var(--paper-line); padding:14px 16px 16px;}
+
+.rank-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:640px){.rank-grid{grid-template-columns:1fr;}}
+.rank-col h4{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:6px;}
+.rank-col.buy h4{color:var(--seal-red);}
+.rank-col.sell h4{color:var(--jade);}
+table{width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:12px;}
+tr{border-bottom:1px solid var(--paper-line);}
+tr:last-child{border-bottom:none;}
+td{padding:6px 4px;}
+td.rk{color:var(--ink-dim); width:18px;}
+td.amt{text-align:right; font-weight:700;}
+.rank-col.buy td.amt{color:var(--seal-red);}
+.rank-col.sell td.amt{color:var(--jade);}
+.empty-note{font-size:12.5px; color:var(--ink-dim); padding:6px 0;}
+
+/* ---------- GENERIC (other strategy types) BODY ---------- */
+.generic-body{font-size:13px; color:var(--ink-dim); padding:6px 0;}
+
+/* ---------- ADD CARD ---------- */
+.add-card{
+  border:1px dashed var(--paper-line); border-radius:4px; padding:20px; text-align:center;
+  color:var(--ink-dim); cursor:pointer; transition:border-color .15s, color .15s; font-size:13.5px;
+}
+.add-card:hover{border-color:var(--brass); color:var(--brass);}
+.add-card .plus{font-family:var(--font-display); font-size:20px; display:block; margin-bottom:4px;}
+
+/* ---------- MODALS ---------- */
+.overlay{position:fixed; inset:0; background:#0008; backdrop-filter:blur(2px); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
+.overlay.show{display:flex;}
+.modal{background:var(--paper-panel); border:1px solid var(--paper-line); border-radius:6px; padding:26px; width:100%; max-width:440px;}
+.modal h3{font-family:var(--font-display); margin-bottom:16px;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:11.5px; color:var(--ink-dim); margin-bottom:5px; font-family:var(--font-mono);}
+.field input, .field textarea, .field select{
+  width:100%; background:#00000033; border:1px solid var(--paper-line); border-radius:3px;
+  color:var(--ink); padding:9px 10px; font-family:var(--font-body); font-size:13.5px;
+}
+.field textarea{resize:vertical; min-height:56px;}
+.modal-actions{display:flex; gap:10px; margin-top:18px; justify-content:flex-end;}
+.btn{font-family:var(--font-mono); font-size:12px; padding:8px 16px; border-radius:3px; cursor:pointer; border:1px solid var(--paper-line); background:none; color:var(--ink-dim);}
+.btn.primary{border-color:var(--seal-red); color:var(--seal-red);}
+.btn.primary:hover{background:var(--seal-red-dim);}
+.btn:hover{color:var(--ink);}
+
+.loading{color:var(--ink-dim); font-size:13px; padding:40px; text-align:center; font-family:var(--font-mono);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">自動化策略監控</div>
+    <h1>策略警示主頁</h1>
+    <p>集中管理多個台股自動化策略。「分點追蹤」策略下可同時監控多個券商分點，各自獨立顯示買賣超排行；其他策略類型可依需求擴充。</p>
+    <div class="stat-row" id="statRow"></div>
+  </div>
+
+  <div class="section-head">
+    <h2>已建立策略</h2>
+    <span class="count" id="strategyCount"></span>
+  </div>
+
+  <div id="strategyList"></div>
+
+  <div class="add-card" onclick="openStrategyModal()">
+    <span class="plus">＋</span>
+    新增一個策略
+  </div>
+
+</div>
+
+<!-- Add strategy modal -->
+<div class="overlay" id="strategyOverlay">
+  <div class="modal">
+    <h3>新增策略</h3>
+    <div class="field">
+      <label>策略名稱</label>
+      <input id="s-name" placeholder="例如：分點追蹤 / 均線突破警示">
+    </div>
+    <div class="field">
+      <label>類型</label>
+      <select id="s-type">
+        <option value="branch-tracking">分點追蹤（可加入多個分點）</option>
+        <option value="generic">一般策略（單一設定）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>說明（選填）</label>
+      <textarea id="s-desc" placeholder="這個策略要追蹤或警示什麼？"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeStrategyModal()">取消</button>
+      <button class="btn primary" onclick="addStrategy()">建立策略</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add branch modal -->
+<div class="overlay" id="branchOverlay">
+  <div class="modal">
+    <h3>新增分點</h3>
+    <div class="field">
+      <label>分點名稱</label>
+      <input id="b-name" placeholder="例如：元大丹鳳">
+    </div>
+    <div class="field">
+      <label>資料來源網址</label>
+      <input id="b-url" placeholder="https://www.wantgoo.com/...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeBranchModal()">取消</button>
+      <button class="btn primary" onclick="addBranch()">加入分點</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SEED_DATA = [
+  {
+    id: 'strat-branch-tracking',
+    name: '分點追蹤',
+    type: 'branch-tracking',
+    status: 'active',
+    desc: '同時監控多個券商分點的每日買賣超排行，掌握主力進出方向。',
+    collapsed: false,
+    branches: [
+      {
+        id: 'khgt-8450',
+        name: '康和證券',
+        url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=8450&branchId=8450&orderBy=amount',
+        updated: '2026/07/31',
+        collapsed: true,
+        buy: [
+          ['景碩 3189','378,216'],
+          ['南亞科 2408','213,126'],
+          ['穩懋 3105','187,934'],
+          ['緯穎 6669','108,114'],
+          ['聯電 2303','96,991'],
+        ],
+        sell: [
+          ['勤誠 8210','-196,814'],
+          ['強茂 2481','-184,624'],
+          ['群聯 8299','-147,141'],
+          ['京鼎 3413','-121,843'],
+          ['精材 3374','-74,844'],
+        ]
+      },
+      {
+        id: 'fb-9661',
+        name: '富邦新店',
+        url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=9600&branchId=9661&orderBy=amount',
+        updated: '2026/07/31',
+        collapsed: true,
+        buy: [
+          ['景碩 3189','236,568'],
+          ['盟立 2464','123,759'],
+          ['光聖 6442','76,085'],
+          ['波若威 3163','75,785'],
+          ['金居 8358','60,138'],
+        ],
+        sell: [
+          ['緯創 3231','-29,700'],
+          ['南亞科 2408','-24,981'],
+          ['元大台灣50 0050','-19,389'],
+          ['中美晶 5483','-18,359'],
+          ['欣興 3037','-17,045'],
+        ]
+      },
+      {
+        id: 'yd-9801',
+        name: '元大松江',
+        url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=9800&branchId=9801&orderBy=amount',
+        updated: '2026/07/31',
+        collapsed: true,
+        buy: [
+          ['景碩 3189','218,698'],
+          ['頎邦 6147','70,095'],
+          ['台達電 2308','46,396'],
+          ['創意 3443','29,660'],
+          ['日月光投控 3711','21,078'],
+        ],
+        sell: [
+          ['光聖 6442','-44,508'],
+          ['萬潤 6187','-15,807'],
+          ['精材 3374','-15,702'],
+          ['元大台灣50正2 00631L','-10,352'],
+          ['華碩 2357','-10,323'],
+        ]
+      },
+      {
+        id: 'gt-8880',
+        name: '國泰國泰',
+        url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=888Q&branchId=8880&orderBy=amount',
+        updated: '2026/07/31',
+        collapsed: true,
+        buy: [
+          ['信驊 5274','539,761'],
+          ['欣興 3037','404,813'],
+          ['台勝科 3532','305,819'],
+          ['鴻海 2317','296,260'],
+          ['旺矽 6223','261,754'],
+        ],
+        sell: [
+          ['元大金 2885','-761,030'],
+          ['勤誠 8210','-293,880'],
+          ['印能科技 7734','-253,671'],
+          ['健策 3653','-250,079'],
+          ['亞德客-KY 1590','-192,084'],
+        ]
+      },
+      {
+        id: 'kg-9217',
+        name: '凱基松山',
+        url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=9200&branchId=9217&orderBy=amount',
+        updated: '2026/07/31',
+        collapsed: true,
+        buy: [
+          ['華新科 2492','60,000'],
+          ['金居 8358','9,028'],
+          ['元大台灣50正2 00631L','3,942'],
+          ['漢翔 2634','3,752'],
+          ['晶技 3042','3,595'],
+        ],
+        sell: [
+          ['華邦電 2344','-34,092'],
+          ['台達電 2308','-24,234'],
+          ['聯電 2303','-16,124'],
+          ['南亞科 2408','-14,697'],
+          ['緯創 3231','-8,804'],
+        ]
+      }
+    ]
+  }
+];
+
+let strategies = [];
+
+async function load(){
+  document.getElementById('strategyList').innerHTML = '<div class="loading">讀取中…</div>';
+  try{
+    const res = await window.storage.get('strategies_v3', false);
+    strategies = res ? JSON.parse(res.value) : SEED_DATA;
+  }catch(e){
+    strategies = SEED_DATA;
+    try{ await window.storage.set('strategies_v3', JSON.stringify(strategies), false); }catch(e2){}
+  }
+  render();
+}
+
+async function save(){
+  try{ await window.storage.set('strategies_v3', JSON.stringify(strategies), false); }
+  catch(e){ console.error('storage error', e); }
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function typeLabel(type){
+  return type === 'branch-tracking' ? '分點追蹤 · 多分點監控' : '一般策略';
+}
+
+function render(){
+  const list = document.getElementById('strategyList');
+  document.getElementById('strategyCount').textContent = strategies.length + ' 個策略';
+
+  const totalBranches = strategies.reduce((n,s)=> n + (s.branches ? s.branches.length : 0), 0);
+  const active = strategies.filter(s=>s.status==='active').length;
+  document.getElementById('statRow').innerHTML = `
+    <div class="stat"><div class="num">${strategies.length}</div><div class="lbl">總策略數</div></div>
+    <div class="stat buy"><div class="num">${active}</div><div class="lbl">啟用中策略</div></div>
+    <div class="stat"><div class="num">${totalBranches}</div><div class="lbl">追蹤分點數</div></div>
+  `;
+
+  if(strategies.length === 0){
+    list.innerHTML = '<div class="loading">尚未建立任何策略，點下方按鈕新增第一個。</div>';
+    return;
+  }
+
+  list.innerHTML = strategies.map((s, sIdx) => {
+    const isBranchType = s.type === 'branch-tracking';
+    let body;
+
+    if(isBranchType){
+      const branches = s.branches || [];
+      body = `
+        <div class="branch-toolbar">
+          <span class="lbl">追蹤中的分點（${branches.length}）</span>
+          <button class="add-branch-btn" onclick="event.stopPropagation(); openBranchModal(${sIdx})">＋ 新增分點</button>
+        </div>
+        ${branches.length === 0 ? '<div class="empty-note">尚未加入任何分點。</div>' : branches.map((b, bIdx) => {
+          const hasData = b.buy && b.buy.length;
+          const topBuy = hasData ? b.buy[0] : null;
+          const topSell = hasData ? b.sell[0] : null;
+          let domain = '';
+          try{ domain = new URL(b.url).hostname; }catch(e){ domain = b.url || '未設定網址'; }
+          return `
+            <div class="branch ${b.collapsed ? 'collapsed' : ''}">
+              <div class="branch-row" onclick="toggleBranch(${sIdx}, ${bIdx})">
+                <div class="name-block">
+                  <span class="dot ${hasData ? 'has-data' : 'no-data'}"></span>
+                  <div>
+                    <div class="bname">${escapeHtml(b.name)}</div>
+                    <div class="burl">${escapeHtml(domain)}</div>
+                  </div>
+                </div>
+                <div class="bmeta">
+                  ${hasData ? `<span class="top-preview">買最多 <b>${escapeHtml(topBuy[0])}</b> ／ 賣最多 <b style="color:var(--jade)">${escapeHtml(topSell[0])}</b></span>` : '<span class="top-preview">尚無資料</span>'}
+                  <span class="updated">${b.updated || '未同步'}</span>
+                  <button class="del-x" onclick="event.stopPropagation(); removeBranch(${sIdx}, ${bIdx})">✕</button>
+                  <span class="branch-chevron">▾</span>
+                </div>
+              </div>
+              <div class="branch-detail">
+                ${hasData ? `
+                  <div class="rank-grid">
+                    <div class="rank-col buy">
+                      <h4>買超前五名</h4>
+                      <table>${b.buy.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt">${escapeHtml(r[1])}</td></tr>`).join('')}</table>
+                    </div>
+                    <div class="rank-col sell">
+                      <h4>賣超前五名</h4>
+                      <table>${b.sell.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt">${escapeHtml(r[1])}</td></tr>`).join('')}</table>
+                    </div>
+                  </div>
+                ` : '<div class="empty-note">同步後會顯示此分點的買賣超排行。</div>'}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    } else {
+      body = `<div class="generic-body">此策略尚未設定資料來源，之後可依需求擴充內容格式。</div>`;
+    }
+
+    return `
+      <div class="strategy ${s.collapsed ? 'collapsed' : ''}">
+        <div class="strategy-head" onclick="toggleStrategy(${sIdx})">
+          <div class="strategy-title-block">
+            <div class="seal ${s.status}">${s.status==='active' ? '啟用' : '草稿'}</div>
+            <div class="strategy-title">
+              <h3>${escapeHtml(s.name)}</h3>
+              <div class="type-lbl">${typeLabel(s.type)}</div>
+              ${s.desc ? `<div class="desc">${escapeHtml(s.desc)}</div>` : ''}
+            </div>
+          </div>
+          <div class="head-right">
+            <span class="status-chip ${s.status}">${s.status==='active' ? 'ACTIVE' : 'DRAFT'}</span>
+            <button class="del-x" onclick="event.stopPropagation(); removeStrategy(${sIdx})" title="刪除策略">✕</button>
+            <span class="chevron">▾</span>
+          </div>
+        </div>
+        <div class="strategy-body">${body}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleStrategy(idx){
+  strategies[idx].collapsed = !strategies[idx].collapsed;
+  save();
+  render();
+}
+function toggleBranch(sIdx, bIdx){
+  const b = strategies[sIdx].branches[bIdx];
+  b.collapsed = !b.collapsed;
+  save();
+  render();
+}
+
+let pendingBranchStrategyIdx = null;
+function openBranchModal(sIdx){
+  pendingBranchStrategyIdx = sIdx;
+  document.getElementById('branchOverlay').classList.add('show');
+}
+function closeBranchModal(){
+  document.getElementById('branchOverlay').classList.remove('show');
+  document.getElementById('b-name').value = '';
+  document.getElementById('b-url').value = '';
+}
+async function addBranch(){
+  const name = document.getElementById('b-name').value.trim();
+  const url = document.getElementById('b-url').value.trim();
+  if(!name || pendingBranchStrategyIdx === null) return;
+  strategies[pendingBranchStrategyIdx].branches.push({
+    id: 'branch-' + Date.now(),
+    name, url,
+    updated: null,
+    collapsed: true,
+    buy: [], sell: []
+  });
+  await save();
+  closeBranchModal();
+  render();
+}
+async function removeBranch(sIdx, bIdx){
+  strategies[sIdx].branches.splice(bIdx,1);
+  await save();
+  render();
+}
+
+function openStrategyModal(){ document.getElementById('strategyOverlay').classList.add('show'); }
+function closeStrategyModal(){
+  document.getElementById('strategyOverlay').classList.remove('show');
+  document.getElementById('s-name').value = '';
+  document.getElementById('s-desc').value = '';
+}
+async function addStrategy(){
+  const name = document.getElementById('s-name').value.trim();
+  const type = document.getElementById('s-type').value;
+  const desc = document.getElementById('s-desc').value.trim();
+  if(!name) return;
+  const newStrat = {
+    id: 'strat-' + Date.now(),
+    name, type, desc,
+    status: 'draft',
+    collapsed: false,
+  };
+  if(type === 'branch-tracking'){ newStrat.branches = []; }
+  strategies.push(newStrat);
+  await save();
+  closeStrategyModal();
+  render();
+}
+async function removeStrategy(idx){
+  strategies.splice(idx,1);
+  await save();
+  render();
+}
+
+load();
+</script>
+</body>
+</html>
