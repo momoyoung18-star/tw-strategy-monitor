@@ -384,12 +384,30 @@ let strategies = [];
 
 function load(){
   document.getElementById('strategyList').innerHTML = '<div class="loading">讀取中…</div>';
+
+  strategies = SEED_DATA.map(s => ({...s, branches: s.branches ? s.branches.map(b => ({...b})) : undefined}));
+
+  let stored = null;
   try{
     const raw = localStorage.getItem('strategies_v3');
-    strategies = raw ? JSON.parse(raw) : SEED_DATA;
-  }catch(e){
-    strategies = SEED_DATA;
+    stored = raw ? JSON.parse(raw) : null;
+  }catch(e){ stored = null; }
+
+  if(stored){
+    stored.forEach(storedStrat => {
+      const seedStrat = strategies.find(s => s.id === storedStrat.id);
+      if(!seedStrat){
+        strategies.push(storedStrat);
+      } else if(seedStrat.branches && storedStrat.branches){
+        storedStrat.branches.forEach(storedBranch => {
+          if(!seedStrat.branches.find(b => b.id === storedBranch.id)){
+            seedStrat.branches.push(storedBranch);
+          }
+        });
+      }
+    });
   }
+
   render();
 }
 
