@@ -194,6 +194,8 @@ table.matrix td.stock-name .code{color:var(--ink-faint); font-family:var(--font-
 .chg.tag{font-size:10px; font-family:var(--font-mono); padding:1px 5px; border-radius:8px; margin-left:4px; vertical-align:middle;}
 .chg.tag.new{color:var(--brass); background:var(--brass-dim);}
 .chg.tag.removed{color:var(--ink-dim); background:#ffffff08;}
+.chg.big-amt{box-shadow:inset 0 0 0 1px var(--brass); background:var(--brass-dim);}
+.chg.big-amt .chg-main::after{content:'⬤'; font-size:6px; color:var(--brass); vertical-align:super; margin-left:3px;}
 .chg-main{font-weight:700; line-height:1.5;}
 .chg-sub{font-weight:500; font-size:10.5px; color:var(--ink-dim); line-height:1.4; opacity:.85;}
 .chg.pos .chg-sub{color:var(--seal-red); opacity:.7;}
@@ -7799,9 +7801,10 @@ function fmtRatio(r){
 function renderMatrixCell(change){
   if(!change) return '<td class="chg zero">－</td>';
   const cls = change.delta > 0 ? 'pos' : (change.delta < 0 ? 'neg' : 'zero');
+  const big = change.amount_yi !== null && change.amount_yi !== undefined && Math.abs(change.amount_yi) >= 5 ? ' big-amt' : '';
   const tag = change.type === 'new' ? '<span class="chg tag new">新</span>'
             : change.type === 'removed' ? '<span class="chg tag removed">移</span>' : '';
-  return `<td class="chg ${cls}">
+  return `<td class="chg ${cls}${big}">
     <div class="chg-main">${fmtLots(change.delta)}張${tag}</div>
     <div class="chg-sub">${fmtYi(change.amount_yi)}</div>
     <div class="chg-sub">${fmtRatio(change.ratio)}</div>
