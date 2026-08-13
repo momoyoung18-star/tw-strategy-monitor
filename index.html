@@ -158,6 +158,8 @@ td.rk{color:var(--ink-dim); width:18px;}
 td.amt{text-align:right; font-weight:700;}
 .rank-col.buy td.amt{color:var(--seal-red);}
 .rank-col.sell td.amt{color:var(--jade);}
+td.amt.big-amt{box-shadow:inset 0 0 0 1px var(--brass); background:var(--brass-dim); padding-right:8px;}
+td.amt.big-amt::after{content:'⬤'; font-size:6px; color:var(--brass); vertical-align:super; margin-left:3px;}
 .empty-note{font-size:12.5px; color:var(--ink-dim); padding:6px 0;}
 
 /* ---------- GENERIC (other strategy types) BODY ---------- */
@@ -8691,105 +8693,105 @@ const SEED_DATA = [
         id: 'khgt-8450',
         name: '康和證券',
         url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=8450&branchId=8450&orderBy=amount',
-        updated: '2026/08/10',
+        updated: '2026/08/13',
         collapsed: true,
         buy: [
-          ['日月光投控 3711','31,387.0'],
-          ['國巨* 2327','25,223.0'],
-          ['富世達 6805','20,569.0'],
-          ['南亞科 2408','18,761.0'],
-          ['台達電 2308','15,296.7'],
+          ['大立光 3008','32,669.8'],
+          ['鴻海 2317','21,271.9'],
+          ['奇鋐 3017','14,901.0'],
+          ['富邦金 2881','10,303.9'],
+          ['聯發科 2454','9,993.8'],
         ],
         sell: [
-          ['聯發科 2454','-9,645.2'],
-          ['一詮 2486','-5,774.2'],
-          ['勤誠 8210','-3,352.1'],
-          ['欣興 3037','-2,987.4'],
-          ['凱美 2375','-2,373.7'],
+          ['國巨* 2327','-72,244.5'],
+          ['漢唐 2404','-41,402.9'],
+          ['勤誠 8210','-20,719.9'],
+          ['日月光投控 3711','-18,783.0'],
+          ['群聯 8299','-11,210.3'],
         ]
       },
       {
         id: 'fb-9661',
         name: '富邦新店',
         url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=9600&branchId=9661&orderBy=amount',
-        updated: '2026/08/10',
+        updated: '2026/08/13',
         collapsed: true,
         buy: [
-          ['光聖 6442','6,838.9'],
-          ['晶技 3042','6,101.3'],
-          ['盟立 2464','5,721.3'],
-          ['台表科 6278','4,192.7'],
-          ['金像電 2368','2,305.8'],
+          ['華邦電 2344','10,812.3'],
+          ['廣達 2382','5,324.7'],
+          ['鴻海 2317','3,974.6'],
+          ['和益 1709','3,062.3'],
+          ['禾伸堂 3026','2,583.3'],
         ],
         sell: [
-          ['南亞科 2408','-8,571.8'],
-          ['台達電 2308','-7,184.3'],
-          ['頎邦 6147','-5,511.1'],
-          ['華邦電 2344','-2,755.8'],
-          ['聯發科 2454','-2,017.2'],
+          ['力積電 6770','-106,225.6'],
+          ['聯發科 2454','-6,187.3'],
+          ['南亞科 2408','-5,075.9'],
+          ['元大台灣50 0050','-4,158.1'],
+          ['台積電 2330','-4,156.0'],
         ]
       },
       {
         id: 'yd-9801',
         name: '元大松江',
         url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=9800&branchId=9801&orderBy=amount',
-        updated: '2026/08/10',
+        updated: '2026/08/13',
         collapsed: true,
         buy: [
-          ['健策 3653','9,475.3'],
-          ['創意 3443','5,562.2'],
-          ['台燿 6274','5,457.0'],
-          ['光聖 6442','4,074.4'],
-          ['聯鈞 3450','3,552.2'],
+          ['大立光 3008','33,065.5'],
+          ['鴻海 2317','3,849.8'],
+          ['創意 3443','3,786.3'],
+          ['順達 3211','3,196.3'],
+          ['南亞 1303','2,502.8'],
         ],
         sell: [
-          ['台勝科 3532','-7,025.6'],
-          ['聯茂 6213','-5,490.6'],
-          ['群聯 8299','-4,927.3'],
-          ['日月光投控 3711','-3,843.6'],
-          ['文曄 3036','-3,818.2'],
+          ['頎邦 6147','-16,074.4'],
+          ['南亞科 2408','-5,345.3'],
+          ['力旺 3529','-4,615.5'],
+          ['萬潤 6187','-4,502.7'],
+          ['致茂 2360','-4,245.5'],
         ]
       },
       {
         id: 'gt-8880',
         name: '國泰國泰',
         url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=888Q&branchId=8880&orderBy=amount',
-        updated: '2026/08/10',
+        updated: '2026/08/13',
         collapsed: true,
         buy: [
-          ['南亞 1303','86,169.7'],
-          ['元大台灣50 0050','45,955.9'],
-          ['台光電 2383','39,770.3'],
-          ['台積電 2330','38,120.4'],
-          ['富世達 6805','27,605.5'],
+          ['台積電 2330','163,404.9'],
+          ['聯發科 2454','83,335.2'],
+          ['南亞 1303','53,212.8'],
+          ['台達電 2308','47,477.7'],
+          ['金像電 2368','41,816.3'],
         ],
         sell: [
-          ['聯發科 2454','-62,041.2'],
-          ['南亞科 2408','-31,524.5'],
-          ['緯穎 6669','-18,166.8'],
-          ['穩懋 3105','-17,544.2'],
-          ['嘉澤 3533','-17,508.1'],
+          ['聯電 2303','-32,400.9'],
+          ['華南金 2880','-31,825.5'],
+          ['嘉澤 3533','-30,204.9'],
+          ['奇鋐 3017','-25,061.2'],
+          ['漢唐 2404','-15,311.0'],
         ]
       },
       {
         id: 'kg-9217',
         name: '凱基松山',
         url: 'https://www.wantgoo.com/stock/major-investors/broker-buy-sell-rank?during=1&majorId=9200&branchId=9217&orderBy=amount',
-        updated: '2026/08/10',
+        updated: '2026/08/13',
         collapsed: true,
         buy: [
-          ['台積電 2330','4,027.4'],
-          ['鈺邦 6449','3,190.4'],
-          ['世芯-KY 3661','2,547.3'],
-          ['鴻海 2317','2,280.3'],
-          ['臻鼎-KY 4958','1,190.6'],
+          ['華新科 2492','75,607.6'],
+          ['鈺邦 6449','3,012.4'],
+          ['穩懋 3105','2,646.5'],
+          ['台達電 2308','1,777.8'],
+          ['光聖 6442','1,340.2'],
         ],
         sell: [
-          ['南亞科 2408','-5,604.6'],
-          ['台達電 2308','-1,379.8'],
-          ['群創 3481','-1,337.6'],
-          ['萬海 2615','-1,145.6'],
-          ['廣達 2382','-1,112.8'],
+          ['南亞科 2408','-11,980.0'],
+          ['聯發科 2454','-3,561.6'],
+          ['華邦電 2344','-2,749.9'],
+          ['國巨* 2327','-2,713.8'],
+          ['奇鋐 3017','-1,731.9'],
         ]
       }
     ]
@@ -8840,6 +8842,11 @@ function escapeHtml(str){
   const d = document.createElement('div');
   d.textContent = str || '';
   return d.innerHTML;
+}
+
+function isBigAmt(amtStr){
+  const n = parseFloat(String(amtStr).replace(/,/g,''));
+  return !isNaN(n) && Math.abs(n) >= 50000;
 }
 
 function typeLabel(type){
@@ -8978,11 +8985,11 @@ function render(){
                   <div class="rank-grid">
                     <div class="rank-col buy">
                       <h4>買超前五名（萬元）</h4>
-                      <table>${b.buy.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt">${escapeHtml(r[1])}</td></tr>`).join('')}</table>
+                      <table>${b.buy.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt${isBigAmt(r[1]) ? ' big-amt' : ''}">${escapeHtml(r[1])}</td></tr>`).join('')}</table>
                     </div>
                     <div class="rank-col sell">
                       <h4>賣超前五名（萬元）</h4>
-                      <table>${b.sell.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt">${escapeHtml(r[1])}</td></tr>`).join('')}</table>
+                      <table>${b.sell.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt${isBigAmt(r[1]) ? ' big-amt' : ''}">${escapeHtml(r[1])}</td></tr>`).join('')}</table>
                     </div>
                   </div>
                 ` : '<div class="empty-note">同步後會顯示此分點的買賣超排行。</div>'}
