@@ -178,6 +178,12 @@ td.amt.big-amt::after{content:'⬤'; font-size:6px; color:var(--brass); vertical
 .etf-block.collapsed .etf-chevron{transform:rotate(-90deg);}
 .etf-block.collapsed .etf-detail{display:none;}
 .etf-detail{border-top:1px solid var(--paper-line); padding:14px 16px 16px;}
+.hide-unchanged-toggle{
+  display:flex; align-items:center; gap:5px; cursor:pointer;
+  font-family:var(--font-mono); font-size:11px; color:var(--ink-dim); white-space:nowrap;
+}
+.hide-unchanged-toggle input{cursor:pointer;}
+.etf-detail.hide-unchanged table.matrix tr[data-changed="false"]{display:none;}
 .matrix-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
 table.matrix{width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:12px; white-space:nowrap;}
 table.matrix th{
@@ -20921,12 +20927,17 @@ function render(){
       body = `
         <div class="etf-toolbar"><span class="lbl">追蹤中的ETF（${etfs.length}）</span></div>
         ${etfs.length === 0 ? '<div class="empty-note">尚無資料，等待每日排程同步。</div>' : etfs.map((e, eIdx) => {
-          const dateHeaders = e.dates.slice(1); // first date has no prior to diff against
+          // Newest date first (leftmost) — easier to read than scrolling right for today's column.
+          const dateHeaders = e.dates.slice(1).reverse();
+          const latestDate = dateHeaders[0];
           return `
             <div class="etf-block ${e.collapsed ? 'collapsed' : ''}">
               <div class="etf-row" onclick="toggleEtf(${sIdx}, ${eIdx})">
                 <div class="ename">${escapeHtml(e.name)}</div>
                 <div class="emeta">
+                  <label class="hide-unchanged-toggle" onclick="event.stopPropagation()">
+                    <input type="checkbox" onchange="toggleHideUnchanged(this)"> 只顯示異動
+                  </label>
                   <span class="ecount">${e.rows.length} 檔成分股</span>
                   <span class="updated">最新 ${escapeHtml(e.updated)}</span>
                   <span class="etf-chevron">▾</span>
@@ -20944,7 +20955,7 @@ function render(){
                     </thead>
                     <tbody>
                       ${e.rows.map(r => `
-                        <tr>
+                        <tr data-changed="${latestDate && r.changes[latestDate] ? 'true' : 'false'}">
                           <td class="stock-name"><span class="code">${escapeHtml(r.code)}</span>${escapeHtml(r.name)}</td>
                           ${dateHeaders.map(d => renderMatrixCell(r.changes[d])).join('')}
                           <td class="net chg ${r.net > 0 ? 'pos' : (r.net < 0 ? 'neg' : 'zero')}">${fmtLots(r.net)}</td>
@@ -21049,6 +21060,10 @@ function toggleEtf(sIdx, eIdx){
   e.collapsed = !e.collapsed;
   save();
   render();
+}
+function toggleHideUnchanged(checkbox){
+  const detail = checkbox.closest('.etf-block').querySelector('.etf-detail');
+  detail.classList.toggle('hide-unchanged', checkbox.checked);
 }
 
 let pendingBranchStrategyIdx = null;
