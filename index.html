@@ -121,20 +121,18 @@ h1{font-family:var(--font-display); font-weight:900; font-size:42px; margin:14px
 .heatmap-header{display:flex; align-items:baseline; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
 .heatmap-header h4{font-family:var(--font-display); font-size:15px; font-weight:700;}
 .heatmap-sub{font-family:var(--font-mono); font-size:10.5px; color:var(--ink-dim);}
-.heatmap-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
-table.heatmap-table{width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:11.5px; white-space:nowrap;}
-table.heatmap-table th{
-  text-align:center; padding:6px 10px; color:var(--ink-dim); font-weight:500;
-  border-bottom:1px solid var(--paper-line); font-size:10.5px;
+.tm-canvas{position:relative; width:100%; aspect-ratio:1000/380; border-radius:4px; overflow:hidden; background:var(--paper-deep);}
+.tm-tile{
+  position:absolute; box-sizing:border-box; border:1px solid var(--paper-deep);
+  padding:6px 8px; overflow:hidden; color:var(--ink); font-family:var(--font-mono);
+  display:flex; flex-direction:column; justify-content:flex-start; cursor:default;
+  transition:filter .12s;
 }
-table.heatmap-table th.hm-stock-h{text-align:left;}
-table.heatmap-table td{padding:6px 8px; border-bottom:1px solid var(--paper-line); text-align:center;}
-table.heatmap-table tr:last-child td{border-bottom:none;}
-td.hm-stock{text-align:left; font-family:var(--font-body); font-size:12px; color:var(--ink); position:sticky; left:0; background:var(--paper-panel-2);}
-td.hm-cell{border-radius:3px; color:var(--ink);}
-td.hm-empty{color:var(--ink-faint); background:none !important;}
-.hm-pct{font-weight:700; font-size:12px;}
-.hm-amt{font-size:9.5px; color:var(--ink-dim); margin-top:1px;}
+.tm-tile:hover{filter:brightness(1.15);}
+.tm-rank{font-size:.75em; color:var(--ink-faint); line-height:1.2;}
+.tm-name{font-family:var(--font-body); font-weight:700; font-size:1.05em; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.tm-amt{font-size:.85em; font-weight:700; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.tm-groups{font-size:.7em; color:var(--ink-dim); margin-top:3px; line-height:1.35; overflow:hidden;}
 
 .branch-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
 .branch-toolbar .lbl{font-family:var(--font-mono); font-size:11px; color:var(--ink-dim); letter-spacing:.08em; text-transform:uppercase;}
@@ -22407,6 +22405,63 @@ const BRANCH_GROUPS = {
 };
 const GROUP_ORDER = ['Frank','凱多','松山','忠哥','五權','焦家'];
 
+function squarifyWorstRatio(row, rowSum, side){
+  const rowMax = Math.max(...row);
+  const rowMin = Math.min(...row);
+  const sideSq = side * side;
+  const sumSq = rowSum * rowSum;
+  return Math.max((sideSq * rowMax) / sumSq, sumSq / (sideSq * rowMin));
+}
+
+function squarify(values, x, y, w, h){
+  const rects = [];
+  let remaining = values.slice();
+  let rx = x, ry = y, rw = w, rh = h;
+  while(remaining.length){
+    const side = Math.min(rw, rh);
+    let row = [remaining[0]];
+    let rowSum = remaining[0];
+    let i = 1;
+    while(i < remaining.length){
+      const testRow = row.concat([remaining[i]]);
+      const testSum = rowSum + remaining[i];
+      if(squarifyWorstRatio(testRow, testSum, side) <= squarifyWorstRatio(row, rowSum, side)){
+        row = testRow;
+        rowSum = testSum;
+        i++;
+      } else break;
+    }
+    if(rw >= rh){
+      const colWidth = rowSum / rh;
+      let cy = ry;
+      row.forEach(v => {
+        const itemHeight = (v / rowSum) * rh;
+        rects.push({value: v, x: rx, y: cy, w: colWidth, h: itemHeight});
+        cy += itemHeight;
+      });
+      rx += colWidth;
+      rw -= colWidth;
+    } else {
+      const rowHeight = rowSum / rw;
+      let cx = rx;
+      row.forEach(v => {
+        const itemWidth = (v / rowSum) * rw;
+        rects.push({value: v, x: cx, y: ry, w: itemWidth, h: rowHeight});
+        cx += itemWidth;
+      });
+      ry += rowHeight;
+      rh -= rowHeight;
+    }
+    remaining = remaining.slice(row.length);
+  }
+  return rects;
+}
+
+function fmtYiAmt(wan){
+  const yi = wan / 10000;
+  return yi.toFixed(yi >= 10 ? 1 : 2) + '億';
+}
+
 function renderGroupHeatmap(branches){
   const groupData = {};
   GROUP_ORDER.forEach(g => groupData[g] = {});
@@ -22422,59 +22477,51 @@ function renderGroupHeatmap(branches){
     });
   });
 
-  const groupTotals = {};
-  GROUP_ORDER.forEach(g => {
-    groupTotals[g] = Object.values(groupData[g]).reduce((sum,v) => sum + v, 0);
-  });
-
   const stockTotals = {};
   GROUP_ORDER.forEach(g => {
     Object.entries(groupData[g]).forEach(([label, amt]) => {
       stockTotals[label] = (stockTotals[label] || 0) + amt;
     });
   });
-  const stocks = Object.keys(stockTotals).sort((a,b) => stockTotals[b] - stockTotals[a]);
+  const top10 = Object.keys(stockTotals).sort((a,b) => stockTotals[b] - stockTotals[a]).slice(0, 10);
 
-  if(stocks.length === 0) return '';
+  if(top10.length === 0) return '';
+
+  const top10Sum = top10.reduce((s, label) => s + stockTotals[label], 0);
+  const CANVAS_W = 1000, CANVAS_H = 380;
+  const scale = (CANVAS_W * CANVAS_H) / top10Sum;
+  const values = top10.map(label => stockTotals[label] * scale);
+  const rects = squarify(values, 0, 0, CANVAS_W, CANVAS_H);
+
+  const tiles = top10.map((label, i) => {
+    const rect = rects[i];
+    const total = stockTotals[label];
+    const pct = (total / top10Sum * 100);
+    const contributors = GROUP_ORDER
+      .filter(g => groupData[g][label])
+      .map(g => `${g} ${fmtYiAmt(groupData[g][label])}`)
+      .join(' ／ ');
+    const alpha = Math.min(0.2 + (pct/100) * 2.2, 0.92);
+    const areaShare = (rect.w * rect.h) / (CANVAS_W * CANVAS_H);
+    const fontScale = Math.max(0.7, Math.min(1.4, Math.sqrt(areaShare) * 6));
+    return `
+      <div class="tm-tile" title="${escapeHtml(label)}（近20日累積買超）\n${escapeHtml(contributors)}"
+        style="left:${(rect.x/CANVAS_W*100).toFixed(3)}%; top:${(rect.y/CANVAS_H*100).toFixed(3)}%; width:${(rect.w/CANVAS_W*100).toFixed(3)}%; height:${(rect.h/CANVAS_H*100).toFixed(3)}%; background:rgba(200,67,61,${alpha.toFixed(2)}); font-size:${fontScale.toFixed(2)}em;">
+        <div class="tm-rank">#${i+1}</div>
+        <div class="tm-name">${escapeHtml(label)}</div>
+        <div class="tm-amt">${fmtYiAmt(total)}・${pct.toFixed(1)}%</div>
+        <div class="tm-groups">${escapeHtml(contributors)}</div>
+      </div>
+    `;
+  }).join('');
 
   return `
     <div class="heatmap-section">
       <div class="heatmap-header">
         <h4>分點分群・買超熱力圖</h4>
-        <span class="heatmap-sub">近20日累積買超前五名彙總・依各群買超金額比例上色</span>
+        <span class="heatmap-sub">近20日累積買超前十大標的・面積 = 佔前十大總額比例</span>
       </div>
-      <div class="heatmap-scroll">
-        <table class="heatmap-table">
-          <thead>
-            <tr>
-              <th class="hm-stock-h">股票</th>
-              ${GROUP_ORDER.map(g => `<th>${escapeHtml(g)}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            ${stocks.map(stock => `
-              <tr>
-                <td class="hm-stock">${escapeHtml(stock)}</td>
-                ${GROUP_ORDER.map(g => {
-                  const amt = groupData[g][stock];
-                  const total = groupTotals[g];
-                  if(!amt || total <= 0){
-                    return '<td class="hm-cell hm-empty">－</td>';
-                  }
-                  const ratio = amt / total;
-                  const alpha = Math.min(0.12 + ratio * 1.6, 0.92);
-                  const pct = (ratio * 100).toFixed(1);
-                  const amtDisp = amt.toLocaleString('en-US', {maximumFractionDigits: 0});
-                  return `<td class="hm-cell" style="background:rgba(200,67,61,${alpha.toFixed(2)})">
-                    <div class="hm-pct">${pct}%</div>
-                    <div class="hm-amt">${amtDisp}萬</div>
-                  </td>`;
-                }).join('')}
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+      <div class="tm-canvas">${tiles}</div>
     </div>
   `;
 }
