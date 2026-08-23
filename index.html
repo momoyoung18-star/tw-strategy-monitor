@@ -23511,14 +23511,14 @@ function render(){
                 <div class="ename">${escapeHtml(e.name)}</div>
                 <div class="emeta">
                   <label class="hide-unchanged-toggle" onclick="event.stopPropagation()">
-                    <input type="checkbox" onchange="toggleHideUnchanged(this)"> 只顯示異動
+                    <input type="checkbox" checked onchange="toggleHideUnchanged(this)"> 只顯示異動
                   </label>
                   <span class="ecount">${e.rows.length} 檔成分股</span>
                   <span class="updated">最新 ${escapeHtml(e.updated)}</span>
                   <span class="etf-chevron">▾</span>
                 </div>
               </div>
-              <div class="etf-detail">
+              <div class="etf-detail hide-unchanged">
                 <div class="matrix-scroll">
                   <table class="matrix">
                     <thead>
