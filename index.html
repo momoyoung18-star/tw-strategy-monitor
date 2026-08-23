@@ -23311,12 +23311,11 @@ const BRANCH_GROUPS = {
   'fb-9661': 'Frank',
   'yd-9801': 'Frank',
   'kg-9275': '凱多',
-  'kg-9217': '松山',
   'gp-779z': '忠哥',
   'tx-9b25': '五權',
   'yd-984k': '焦家',
 };
-const GROUP_ORDER = ['Frank','凱多','松山','忠哥','五權','焦家'];
+const GROUP_ORDER = ['Frank','凱多','忠哥','五權','焦家'];
 
 function squarifyWorstRatio(row, rowSum, side){
   const rowMax = Math.max(...row);
@@ -23411,6 +23410,7 @@ function renderGroupHeatmap(branches, period, periodTitle){
     const pct = (total / top10Sum * 100);
     const contributors = GROUP_ORDER
       .filter(g => groupData[g][label])
+      .sort((ga, gb) => groupData[gb][label] - groupData[ga][label])
       .map(g => `${g} ${fmtYiAmt(groupData[g][label])}`)
       .join(' ／ ');
     const alpha = Math.min(0.2 + (pct/100) * 2.2, 0.92);
