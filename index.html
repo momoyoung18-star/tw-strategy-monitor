@@ -117,6 +117,25 @@ h1{font-family:var(--font-display); font-weight:900; font-size:42px; margin:14px
 .del-x:hover{color:var(--seal-red);}
 
 /* ---------- BRANCH LIST (inside 分點追蹤) ---------- */
+.heatmap-section{margin-bottom:20px; padding-bottom:18px; border-bottom:1px solid var(--paper-line);}
+.heatmap-header{display:flex; align-items:baseline; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.heatmap-header h4{font-family:var(--font-display); font-size:15px; font-weight:700;}
+.heatmap-sub{font-family:var(--font-mono); font-size:10.5px; color:var(--ink-dim);}
+.heatmap-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+table.heatmap-table{width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:11.5px; white-space:nowrap;}
+table.heatmap-table th{
+  text-align:center; padding:6px 10px; color:var(--ink-dim); font-weight:500;
+  border-bottom:1px solid var(--paper-line); font-size:10.5px;
+}
+table.heatmap-table th.hm-stock-h{text-align:left;}
+table.heatmap-table td{padding:6px 8px; border-bottom:1px solid var(--paper-line); text-align:center;}
+table.heatmap-table tr:last-child td{border-bottom:none;}
+td.hm-stock{text-align:left; font-family:var(--font-body); font-size:12px; color:var(--ink); position:sticky; left:0; background:var(--paper-panel-2);}
+td.hm-cell{border-radius:3px; color:var(--ink);}
+td.hm-empty{color:var(--ink-faint); background:none !important;}
+.hm-pct{font-weight:700; font-size:12px;}
+.hm-amt{font-size:9.5px; color:var(--ink-dim); margin-top:1px;}
+
 .branch-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
 .branch-toolbar .lbl{font-family:var(--font-mono); font-size:11px; color:var(--ink-dim); letter-spacing:.08em; text-transform:uppercase;}
 .add-branch-btn{
@@ -22376,6 +22395,90 @@ function isBigAmt(amtStr){
   return !isNaN(n) && Math.abs(n) >= 50000;
 }
 
+const BRANCH_GROUPS = {
+  'khgt-8450': 'Frank',
+  'fb-9661': 'Frank',
+  'yd-9801': 'Frank',
+  'kg-9275': '凱多',
+  'kg-9217': '松山',
+  'gp-779z': '忠哥',
+  'tx-9b25': '五權',
+  'yd-984k': '焦家',
+};
+const GROUP_ORDER = ['Frank','凱多','松山','忠哥','五權','焦家'];
+
+function renderGroupHeatmap(branches){
+  const groupData = {};
+  GROUP_ORDER.forEach(g => groupData[g] = {});
+  (branches || []).forEach(b => {
+    const group = BRANCH_GROUPS[b.id];
+    const p20 = b.periods && b.periods['20'];
+    if(!group || !p20) return;
+    p20.buy.forEach(row => {
+      const label = row[0];
+      const amt = parseFloat(String(row[1]).replace(/,/g,''));
+      if(isNaN(amt)) return;
+      groupData[group][label] = (groupData[group][label] || 0) + amt;
+    });
+  });
+
+  const groupTotals = {};
+  GROUP_ORDER.forEach(g => {
+    groupTotals[g] = Object.values(groupData[g]).reduce((sum,v) => sum + v, 0);
+  });
+
+  const stockTotals = {};
+  GROUP_ORDER.forEach(g => {
+    Object.entries(groupData[g]).forEach(([label, amt]) => {
+      stockTotals[label] = (stockTotals[label] || 0) + amt;
+    });
+  });
+  const stocks = Object.keys(stockTotals).sort((a,b) => stockTotals[b] - stockTotals[a]);
+
+  if(stocks.length === 0) return '';
+
+  return `
+    <div class="heatmap-section">
+      <div class="heatmap-header">
+        <h4>分點分群・買超熱力圖</h4>
+        <span class="heatmap-sub">近20日累積買超前五名彙總・依各群買超金額比例上色</span>
+      </div>
+      <div class="heatmap-scroll">
+        <table class="heatmap-table">
+          <thead>
+            <tr>
+              <th class="hm-stock-h">股票</th>
+              ${GROUP_ORDER.map(g => `<th>${escapeHtml(g)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${stocks.map(stock => `
+              <tr>
+                <td class="hm-stock">${escapeHtml(stock)}</td>
+                ${GROUP_ORDER.map(g => {
+                  const amt = groupData[g][stock];
+                  const total = groupTotals[g];
+                  if(!amt || total <= 0){
+                    return '<td class="hm-cell hm-empty">－</td>';
+                  }
+                  const ratio = amt / total;
+                  const alpha = Math.min(0.12 + ratio * 1.6, 0.92);
+                  const pct = (ratio * 100).toFixed(1);
+                  const amtDisp = amt.toLocaleString('en-US', {maximumFractionDigits: 0});
+                  return `<td class="hm-cell" style="background:rgba(200,67,61,${alpha.toFixed(2)})">
+                    <div class="hm-pct">${pct}%</div>
+                    <div class="hm-amt">${amtDisp}萬</div>
+                  </td>`;
+                }).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function typeLabel(type){
   if(type === 'branch-tracking') return '分點追蹤 · 多分點監控';
   if(type === 'etf-holdings') return 'ETF持股異動 · 定義檔比對';
@@ -22485,6 +22588,7 @@ function render(){
     } else if(isBranchType){
       const branches = s.branches || [];
       body = `
+        ${renderGroupHeatmap(branches)}
         <div class="branch-toolbar">
           <span class="lbl">追蹤中的分點（${branches.length}）</span>
           <button class="add-branch-btn" onclick="event.stopPropagation(); openBranchModal(${sIdx})">＋ 新增分點</button>
