@@ -22444,7 +22444,7 @@ function render(){
           const dateHeaders = e.dates.slice(1).reverse();
           const latestDate = dateHeaders[0];
           return `
-            <div class="etf-block ${e.collapsed ? 'collapsed' : ''}">
+            <div class="etf-block ${e.collapsed === false ? '' : 'collapsed'}">
               <div class="etf-row" onclick="toggleEtf(${sIdx}, ${eIdx})">
                 <div class="ename">${escapeHtml(e.name)}</div>
                 <div class="emeta">
@@ -22585,7 +22585,8 @@ function setBranchPeriod(sIdx, bIdx, period){
 }
 function toggleEtf(sIdx, eIdx){
   const e = strategies[sIdx].etfs[eIdx];
-  e.collapsed = !e.collapsed;
+  const currentlyCollapsed = e.collapsed !== false;
+  e.collapsed = !currentlyCollapsed;
   save();
   render();
 }
