@@ -23287,9 +23287,23 @@ function escapeHtml(str){
   return d.innerHTML;
 }
 
-function isBigAmt(amtStr){
+function bigAmtThresholdYi(period){
+  if(period === '20') return 10;
+  if(period === '3m' || period === '6m') return 20;
+  return 5;
+}
+function isBigAmt(amtStr, period){
   const n = parseFloat(String(amtStr).replace(/,/g,''));
-  return !isNaN(n) && Math.abs(n) >= 50000;
+  if(isNaN(n)) return false;
+  return Math.abs(n) >= bigAmtThresholdYi(period) * 10000;
+}
+function wanToYi(wanStr){
+  const n = typeof wanStr === 'number' ? wanStr : parseFloat(String(wanStr).replace(/,/g,''));
+  return n / 10000;
+}
+function fmtBranchYi(yi){
+  const sign = yi < 0 ? '-' : '';
+  return sign + Math.abs(yi).toFixed(2);
 }
 
 const BRANCH_GROUPS = {
@@ -23357,18 +23371,17 @@ function squarify(values, x, y, w, h){
 }
 
 function fmtYiAmt(wan){
-  const yi = wan / 10000;
-  return yi.toFixed(yi >= 10 ? 1 : 2) + '億';
+  return fmtBranchYi(wan / 10000) + '億';
 }
 
-function renderGroupHeatmap(branches){
+function renderGroupHeatmap(branches, period, periodTitle){
   const groupData = {};
   GROUP_ORDER.forEach(g => groupData[g] = {});
   (branches || []).forEach(b => {
     const group = BRANCH_GROUPS[b.id];
-    const p20 = b.periods && b.periods['20'];
-    if(!group || !p20) return;
-    p20.buy.forEach(row => {
+    const pData = b.periods && b.periods[period];
+    if(!group || !pData) return;
+    pData.buy.forEach(row => {
       const label = row[0];
       const amt = parseFloat(String(row[1]).replace(/,/g,''));
       if(isNaN(amt)) return;
@@ -23404,7 +23417,7 @@ function renderGroupHeatmap(branches){
     const areaShare = (rect.w * rect.h) / (CANVAS_W * CANVAS_H);
     const fontScale = Math.max(0.7, Math.min(1.4, Math.sqrt(areaShare) * 6));
     return `
-      <div class="tm-tile" title="${escapeHtml(label)}（近20日累積買超）\n${escapeHtml(contributors)}"
+      <div class="tm-tile" title="${escapeHtml(label)}（${escapeHtml(periodTitle)}累積買超）\n${escapeHtml(contributors)}"
         style="left:${(rect.x/CANVAS_W*100).toFixed(3)}%; top:${(rect.y/CANVAS_H*100).toFixed(3)}%; width:${(rect.w/CANVAS_W*100).toFixed(3)}%; height:${(rect.h/CANVAS_H*100).toFixed(3)}%; background:rgba(200,67,61,${alpha.toFixed(2)}); font-size:${fontScale.toFixed(2)}em;">
         <div class="tm-rank">#${i+1}</div>
         <div class="tm-name">${escapeHtml(label)}</div>
@@ -23417,8 +23430,8 @@ function renderGroupHeatmap(branches){
   return `
     <div class="heatmap-section">
       <div class="heatmap-header">
-        <h4>分點分群・買超熱力圖</h4>
-        <span class="heatmap-sub">近20日累積買超前十大標的・面積 = 佔前十大總額比例</span>
+        <h4>分點分群・買超熱力圖・${escapeHtml(periodTitle)}</h4>
+        <span class="heatmap-sub">${escapeHtml(periodTitle)}累積買超前十大標的・面積 = 佔前十大總額比例</span>
       </div>
       <div class="tm-canvas">${tiles}</div>
     </div>
@@ -23534,7 +23547,8 @@ function render(){
     } else if(isBranchType){
       const branches = s.branches || [];
       body = `
-        ${renderGroupHeatmap(branches)}
+        ${renderGroupHeatmap(branches, '3m', '近三個月')}
+        ${renderGroupHeatmap(branches, '6m', '近半年')}
         <div class="branch-toolbar">
           <span class="lbl">追蹤中的分點（${branches.length}）</span>
           <button class="add-branch-btn" onclick="event.stopPropagation(); openBranchModal(${sIdx})">＋ 新增分點</button>
@@ -23576,12 +23590,12 @@ function render(){
                   </div>
                   <div class="rank-grid">
                     <div class="rank-col buy">
-                      <h4>買超前十名・${periodLabels[activePeriod]}（萬元）</h4>
-                      <table>${cur.buy.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt${isBigAmt(r[1]) ? ' big-amt' : ''}">${escapeHtml(r[1])}</td></tr>`).join('')}</table>
+                      <h4>買超前十名・${periodLabels[activePeriod]}（億元）</h4>
+                      <table>${cur.buy.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt${isBigAmt(r[1], activePeriod) ? ' big-amt' : ''}">${fmtBranchYi(wanToYi(r[1]))}</td></tr>`).join('')}</table>
                     </div>
                     <div class="rank-col sell">
-                      <h4>賣超前十名・${periodLabels[activePeriod]}（萬元）</h4>
-                      <table>${cur.sell.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt${isBigAmt(r[1]) ? ' big-amt' : ''}">${escapeHtml(r[1])}</td></tr>`).join('')}</table>
+                      <h4>賣超前十名・${periodLabels[activePeriod]}（億元）</h4>
+                      <table>${cur.sell.map((r,i)=>`<tr><td class="rk">${i+1}</td><td>${escapeHtml(r[0])}</td><td class="amt${isBigAmt(r[1], activePeriod) ? ' big-amt' : ''}">${fmtBranchYi(wanToYi(r[1]))}</td></tr>`).join('')}</table>
                     </div>
                   </div>
                 ` : '<div class="empty-note">同步後會顯示此分點的買賣超排行。</div>'}
