@@ -125,15 +125,18 @@ h1{font-family:var(--font-display); font-weight:900; font-size:42px; margin:14px
 .heatmap-weight-note{font-family:var(--font-mono); font-size:10px; color:var(--ink-faint); margin-top:8px; line-height:1.5;}
 .tm-tile{
   position:absolute; box-sizing:border-box; border:1px solid var(--paper-deep);
-  padding:6px 8px; overflow:hidden; color:var(--ink); font-family:var(--font-mono);
+  padding:5px 7px; overflow:hidden; color:var(--ink); font-family:var(--font-mono);
   display:flex; flex-direction:column; justify-content:flex-start; cursor:default;
   transition:filter .12s;
 }
-.tm-tile:hover{filter:brightness(1.15);}
-.tm-rank{font-size:.75em; color:var(--ink-faint); line-height:1.2;}
-.tm-name{font-family:var(--font-body); font-weight:700; font-size:1.05em; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.tm-amt{font-size:.85em; font-weight:700; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.tm-groups{font-size:.7em; color:var(--ink-dim); margin-top:3px; line-height:1.35; overflow:hidden;}
+.tm-tile:hover{filter:brightness(1.15); z-index:2;}
+.tm-tile-mini{justify-content:center; align-items:center; text-align:center; padding:2px 4px;}
+.tm-rank{font-size:.75em; color:var(--ink-faint); line-height:1.15;}
+.tm-name{font-family:var(--font-body); font-weight:700; font-size:1.05em; line-height:1.2; white-space:normal; overflow-wrap:anywhere; word-break:break-word;}
+.tm-amt{font-size:.85em; font-weight:700; margin-top:1px; white-space:normal; overflow-wrap:anywhere;}
+.tm-groups{font-size:.7em; color:var(--ink-dim); margin-top:2px; line-height:1.3; white-space:normal; overflow-wrap:anywhere;}
+.tm-tile-mini .tm-name{font-size:1em;}
+.tm-tile-mini .tm-amt{font-size:.85em;}
 
 .branch-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
 .branch-toolbar .lbl{font-family:var(--font-mono); font-size:11px; color:var(--ink-dim); letter-spacing:.08em; text-transform:uppercase;}
@@ -25408,6 +25411,12 @@ const BRANCH_GROUPS = {
 };
 const GROUP_ORDER = ['Frank','凱多','路竹','忠哥','中壢','焦家','五權'];
 const BRANCH_WEIGHTS = {
+  'khgt-8450': 1.275,
+  'fb-9661': 1.275,
+  'yd-9801': 1.275,
+  'kg-9275': 1.275,
+  'dyj-lz': 1.275,
+  'zf-zl': 1.275,
   'gp-779z': 0.5,
   'yd-984k': 0.7,
   'tx-9b25': 0.7,
@@ -25472,7 +25481,11 @@ function fmtYiAmt(wan){
   return fmtBranchYi(wan / 10000) + '億';
 }
 
-function renderGroupHeatmap(branches, period, periodTitle){
+function renderGroupHeatmap(branches, period, periodTitle, side){
+  side = side || 'buy';
+  const sideLabel = side === 'sell' ? '賣超' : '買超';
+  const colorRgb = side === 'sell' ? '47,158,125' : '200,67,61';
+
   const groupData = {};
   GROUP_ORDER.forEach(g => groupData[g] = {});
   (branches || []).forEach(b => {
@@ -25480,9 +25493,9 @@ function renderGroupHeatmap(branches, period, periodTitle){
     const pData = b.periods && b.periods[period];
     if(!group || !pData) return;
     const weight = branchWeight(b.id);
-    pData.buy.forEach(row => {
+    (pData[side] || []).forEach(row => {
       const label = row[0];
-      const amt = parseFloat(String(row[1]).replace(/,/g,''));
+      const amt = Math.abs(parseFloat(String(row[1]).replace(/,/g,'')));
       if(isNaN(amt)) return;
       groupData[group][label] = (groupData[group][label] || 0) + amt * weight;
     });
@@ -25515,14 +25528,34 @@ function renderGroupHeatmap(branches, period, periodTitle){
       .join(' ／ ');
     const alpha = Math.min(0.2 + (pct/100) * 2.2, 0.92);
     const areaShare = (rect.w * rect.h) / (CANVAS_W * CANVAS_H);
-    const fontScale = Math.max(0.7, Math.min(1.4, Math.sqrt(areaShare) * 6));
-    return `
-      <div class="tm-tile" title="${escapeHtml(label)}（${escapeHtml(periodTitle)}累積買超）\n${escapeHtml(contributors)}"
-        style="left:${(rect.x/CANVAS_W*100).toFixed(3)}%; top:${(rect.y/CANVAS_H*100).toFixed(3)}%; width:${(rect.w/CANVAS_W*100).toFixed(3)}%; height:${(rect.h/CANVAS_H*100).toFixed(3)}%; background:rgba(200,67,61,${alpha.toFixed(2)}); font-size:${fontScale.toFixed(2)}em;">
+    const minSidePx = Math.min(rect.w, rect.h);
+
+    let tier, fontScale, body;
+    if(areaShare >= 0.07 && minSidePx >= 55){
+      tier = 'full';
+      fontScale = Math.min(1.3, 0.85 + areaShare * 3);
+      body = `
         <div class="tm-rank">#${i+1}</div>
         <div class="tm-name">${escapeHtml(label)}</div>
         <div class="tm-amt">${fmtYiAmt(total)}・${pct.toFixed(1)}%</div>
-        <div class="tm-groups">${escapeHtml(contributors)}</div>
+        <div class="tm-groups">${escapeHtml(contributors)}</div>`;
+    } else if(areaShare >= 0.03 && minSidePx >= 35){
+      tier = 'mid';
+      fontScale = 0.78;
+      body = `
+        <div class="tm-name">${escapeHtml(label)}</div>
+        <div class="tm-amt">${fmtYiAmt(total)}・${pct.toFixed(1)}%</div>`;
+    } else {
+      tier = 'mini';
+      fontScale = 0.62;
+      body = `
+        <div class="tm-name">${escapeHtml(label)}</div>
+        <div class="tm-amt">${pct.toFixed(1)}%</div>`;
+    }
+
+    return `
+      <div class="tm-tile tm-tile-${tier}" title="${escapeHtml(label)}（${escapeHtml(periodTitle)}累積${sideLabel}）\n${escapeHtml(contributors)}"
+        style="left:${(rect.x/CANVAS_W*100).toFixed(3)}%; top:${(rect.y/CANVAS_H*100).toFixed(3)}%; width:${(rect.w/CANVAS_W*100).toFixed(3)}%; height:${(rect.h/CANVAS_H*100).toFixed(3)}%; background:rgba(${colorRgb},${alpha.toFixed(2)}); font-size:${fontScale.toFixed(2)}em;">${body}
       </div>
     `;
   }).join('');
@@ -25535,8 +25568,8 @@ function renderGroupHeatmap(branches, period, periodTitle){
   return `
     <div class="heatmap-section">
       <div class="heatmap-header">
-        <h4>分點分群・買超熱力圖・${escapeHtml(periodTitle)}</h4>
-        <span class="heatmap-sub">${escapeHtml(periodTitle)}累積買超前十大標的・面積 = 佔前十大總額比例</span>
+        <h4>分點分群・${sideLabel}熱力圖・${escapeHtml(periodTitle)}</h4>
+        <span class="heatmap-sub">${escapeHtml(periodTitle)}累積${sideLabel}前十大標的・面積 = 佔前十大總額比例</span>
       </div>
       <div class="tm-canvas">${tiles}</div>
       <div class="heatmap-weight-note">分點權重：${weightNote}（未列出權重者為 ×1）</div>
@@ -25653,8 +25686,10 @@ function render(){
     } else if(isBranchType){
       const branches = s.branches || [];
       body = `
-        ${renderGroupHeatmap(branches, '3m', '近三個月')}
-        ${renderGroupHeatmap(branches, '6m', '近半年')}
+        ${renderGroupHeatmap(branches, '3m', '近三個月', 'buy')}
+        ${renderGroupHeatmap(branches, '6m', '近半年', 'buy')}
+        ${renderGroupHeatmap(branches, '3m', '近三個月', 'sell')}
+        ${renderGroupHeatmap(branches, '6m', '近半年', 'sell')}
         <div class="branch-toolbar">
           <span class="lbl">追蹤中的分點（${branches.length}）</span>
           <button class="add-branch-btn" onclick="event.stopPropagation(); openBranchModal(${sIdx})">＋ 新增分點</button>
