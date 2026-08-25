@@ -25481,6 +25481,12 @@ function fmtYiAmt(wan){
   return fmtBranchYi(wan / 10000) + '億';
 }
 
+function isEtfLabel(label){
+  const m = String(label).trim().match(/(\S+)$/);
+  const code = m ? m[1] : '';
+  return code === '0050' || code === '0056' || code.length === 5;
+}
+
 function renderGroupHeatmap(branches, period, periodTitle, side){
   side = side || 'buy';
   const sideLabel = side === 'sell' ? '賣超' : '買超';
@@ -25495,6 +25501,7 @@ function renderGroupHeatmap(branches, period, periodTitle, side){
     const weight = branchWeight(b.id);
     (pData[side] || []).forEach(row => {
       const label = row[0];
+      if(isEtfLabel(label)) return;
       const amt = Math.abs(parseFloat(String(row[1]).replace(/,/g,'')));
       if(isNaN(amt)) return;
       groupData[group][label] = (groupData[group][label] || 0) + amt * weight;
