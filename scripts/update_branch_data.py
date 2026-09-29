@@ -44,8 +44,8 @@ BRANCHES = [
     ("zf-zl", "兆豐中壢", "7000", "0037003000300062"),
     ("yf-nh", "永豐內湖", "9A00", "0039004100390067"),
 ]
-PERIOD_ORDER = ['1', '5', '20', '3m', '6m']
-PERIOD_LABEL = {'1': '近1日', '5': '近5日', '20': '近20日', '3m': '近三個月', '6m': '近半年'}
+PERIOD_ORDER = ['1', '5', '20', '1m', '3m', '6m']
+PERIOD_LABEL = {'1': '近1日', '5': '近5日', '20': '近20日', '1m': '近一個月', '3m': '近三個月', '6m': '近半年'}
 
 
 def months_ago(base_date, months):
@@ -104,9 +104,11 @@ def parse_from_html(text):
     return date_key, parse_rows(buy_html), parse_rows(sell_html)
 
 
-def fetch_period(major, branch, period, today, three_mo_start, six_mo_start):
+def fetch_period(major, branch, period, today, one_mo_start, three_mo_start, six_mo_start):
     if period in ('1', '5', '20'):
         text = fetch_html(major, branch, f"d={period}")
+    elif period == '1m':
+        text = fetch_html(major, branch, f"e={fmt_date_param(one_mo_start)}&f={fmt_date_param(today)}")
     elif period == '3m':
         text = fetch_html(major, branch, f"e={fmt_date_param(three_mo_start)}&f={fmt_date_param(today)}")
     elif period == '6m':
@@ -118,6 +120,7 @@ def fetch_period(major, branch, period, today, three_mo_start, six_mo_start):
 
 def fetch_all():
     today = datetime.date.today()
+    one_mo_start = months_ago(today, 1)
     three_mo_start = months_ago(today, 3)
     six_mo_start = months_ago(today, 6)
 
@@ -130,7 +133,7 @@ def fetch_all():
         branch_notes = []
         for p in PERIOD_ORDER:
             try:
-                date_key, buy_rows, sell_rows = fetch_period(major, branch, p, today, three_mo_start, six_mo_start)
+                date_key, buy_rows, sell_rows = fetch_period(major, branch, p, today, one_mo_start, three_mo_start, six_mo_start)
                 if not buy_rows and not sell_rows:
                     raise ValueError("買超/賣超皆為空（可能是非交易日或網站暫時無資料）")
                 buy10 = [[f"{r['name']} {r['code']}", fmt_wan(r['diff'])] for r in buy_rows[:10]]
@@ -143,7 +146,7 @@ def fetch_all():
                 result[bid][p] = None  # 保留舊資料，不覆蓋
 
         if branch_ok:
-            checklist.append(f"✅ {name}（{bid}）：5 種天期皆更新成功")
+            checklist.append(f"✅ {name}（{bid}）：{len(PERIOD_ORDER)} 種天期皆更新成功")
         else:
             checklist.append(f"❌ {name}（{bid}）：{'、'.join(branch_notes)}")
 

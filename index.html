@@ -59491,8 +59491,10 @@ function render(){
     } else if(isBranchType){
       const branches = s.branches || [];
       body = `
+        ${renderGroupHeatmap(branches, '1m', '近一個月', 'buy')}
         ${renderGroupHeatmap(branches, '3m', '近三個月', 'buy')}
         ${renderGroupHeatmap(branches, '6m', '近半年', 'buy')}
+        ${renderGroupHeatmap(branches, '1m', '近一個月', 'sell')}
         ${renderGroupHeatmap(branches, '3m', '近三個月', 'sell')}
         ${renderGroupHeatmap(branches, '6m', '近半年', 'sell')}
         <div class="branch-toolbar">
