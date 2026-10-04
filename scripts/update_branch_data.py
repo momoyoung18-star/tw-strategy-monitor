@@ -89,9 +89,15 @@ def parse_rows(html):
 
 def fetch_html(major, branch, extra_params):
     url = f"https://fubon-ebrokerdj.fbs.com.tw/z/zg/zgb/zgb0.djhtm?a={major}&b={branch}&c=B&{extra_params}"
-    r = requests.get(url, headers=HEADERS, timeout=20)
-    r.encoding = 'big5'
-    return r.text
+    last_err = None
+    for _ in range(3):
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=(5, 15))
+            r.encoding = 'big5'
+            return r.text
+        except requests.RequestException as e:
+            last_err = e
+    raise last_err
 
 
 def parse_from_html(text):
